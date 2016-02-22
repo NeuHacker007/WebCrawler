@@ -1,0 +1,33 @@
+#####################################################################################
+# Project: WebCrawler																#
+# Authors: @Yifan Zhang(001616011) zhang.yifan2@husky.neu.edu						#
+#		   @Xinyi Zhang(001618402) henry14ab@yahoo.com								#
+# Team:  																			#
+# Date: 02/10/2016																	#
+#####################################################################################
+
+0x01 high level approach 
+	In this project, after our analysis of the requirement, we found that this project needs us to implement a Webcrawler, which asks us to find 5 secrect flags
+	within a HTML tag called <h2> in mutiple different pages. BTW, according to requirement we knew that we are not be allowed to use existing library to deal
+	with HTTP request, cookies and other staffs. So, the first thing we need to do was to debug fake and see what's going on when each click happens and in this
+	stage, we used multiple tools to capture the RAW http response when the traffic is going back and forth with server. In this case, we used Firefox build-in
+	developer toolkit to catpture those request. And, then we looked up numerous tutorials about how to compose a HTTP GET/POST and figured out what those attributes
+	means. After finish HTTP part, we focused on how to send the socket to the server which is not that stable. Thus, we learned the details about each error type of HTTP Response in terms of 302,301,200,500,408,400 and so on. Then the next job is to combine HTTP proccessing function with Webcrawler process. In this case, we
+	employed Spider algorithm with a BFS loop. The core idea is to maintain a queue and a set/list which are used to keep track those URL we need to visit and what URLs we have already visited. Then, the whole work is done.     
+
+0x02 challenges we faces
+	To be honest that the program is quite chanllenging and we met huge amount of difficulties when we try to deal with HTTP request part because both of us are not quite familar with the HTTP protocol and the overall communication back and forth. 
+	
+	The first challenge is the bad requst error(400), which caused by the wrong HTTP request format such as missing blank spaces, missing enter after each attribute
+	missing blank lines between http header part and http data part and missing required attribute such as "content-length" which is necessary in HTTP 1.1. Because this error might be cause by typo and furthermore it can not be debugged actually, so we use third part tools like webscraper, which is a HTTP request interception tool provided in Kali Linux, to capture the unformatted request data and compare
+	each of those. 
+
+	The second chanllenge is the login part, which we spend some time. In this phase, we extract the token and sessionID but at first we are not aware of the sessionID will keep changing if we get a response with status starting with "3", which means we need to redirect to the home page of fakebook site with updated sessionID. It
+	takes us serveral hours to find out the reason. 
+
+	The third challenge might be the most time consuming difficulty that we confronted in this project. By using the socket, we find that sometimes the response will be truncated in the middle. At first we suspect that it must be the problem block size settings of socket.recv function. And we simply enlarge it to a huge number but we find that sometimes it works well and sometimes doesn't. So, we continue investigate the HTTP response, we find that there is little differences between http headers. The normal one contains "content-length" attribute and specify the data's length which we are going to recieve. However, in some cases, the response header's "content-length" doesn't specify a detailed length and use "trunck" instead. So, after searching, we find that actually, the server will randomly response client with sliced data and in each sliced data it will give a length which indicate that next time how many data that we are going to recieve. So, finally, we wrote numerous judgement to keep it works normally.
+
+	The last challenge of us was the Socket block issues, sometimes we recieved blank response from server which indicated that there must be some problem happens. But at that time, we had no idea about that at the beginning. After googled a lot, we got clues that this error happens because we send a request to server and although server has data, server will send blank response to us because the last recv function block the overall communication. We found two ways to deal with that. The first one is to close a socket after each recieve and create new socket before each sending process. And, the second one is to use socket timeout. In this project we adopt the first one but sometimes, it will bring us with performance issues because we need to recreate socket again and again. In the future, we are going to solve it and make it better.    
+
+0x03 overview of how we test our code
+	Actually speaking, we used some mature Python IDE, such as Wings to help us debug the code. A powerfall thing by using IDE is that we can set up break point somewhere so we can know exactly where the error comes from and how to fix that. In commond line interface, we use print functions to debug the problems which is not as efficiency as IDE but it still help us a lot in complete the program. 
